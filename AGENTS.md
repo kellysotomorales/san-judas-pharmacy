@@ -28,3 +28,8 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+
+- Inventory rules (low stock, expiry warnings, price formatting) live as pure functions in `src/lib/inventario.ts` with tests beside them — keeps business rules testable without the database.
+- Staff-only screens live under `src/routes/_authenticated/` and read data with the browser client so row-level security applies to the signed-in user.
