@@ -202,7 +202,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      es_gerente: { Args: never; Returns: boolean }
+      es_personal: { Args: never; Returns: boolean }
+      mi_rol: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
