@@ -80,6 +80,8 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-naranja: var(--naranja);
+  --color-naranja-foreground: var(--naranja-foreground);
   --color-surface: var(--surface);
   --shadow-panel: var(--shadow-panel);
 }
@@ -108,6 +110,9 @@
   --success-foreground: oklch(0.35 0.08 158);
   --warning: oklch(0.92 0.08 85);
   --warning-foreground: oklch(0.42 0.1 65);
+  /* Alerta naranja: vence en menos de 30 días */
+  --naranja: oklch(0.75 0.16 55);
+  --naranja-foreground: oklch(0.25 0.06 40);
   --border: oklch(0.88 0.02 120);
   --input: oklch(0.86 0.02 120);
   --ring: oklch(0.55 0.09 162);

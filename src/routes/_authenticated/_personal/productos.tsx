@@ -1,14 +1,25 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
   useRouter,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { AlertTriangle, CalendarX2, Database, LogOut, Package, RefreshCw, Search } from "lucide-react";
-import { useMemo } from "react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  CalendarX2,
+  Database,
+  Package,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
-import { Marca } from "@/components/marca";
+import { Encabezado } from "@/components/encabezado";
+import { ProductoDialog } from "@/components/producto-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,19 +31,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
 import {
+  DIAS_AVISO_VENCIMIENTO,
   diasParaVencer,
   estadoStock,
   estadoVencimiento,
   formatearFecha,
   formatearPrecio,
+  stockEnAlerta,
 } from "@/lib/inventario";
-import { productosQueryOptions } from "@/lib/productos";
+import { puedeGestionarProductos } from "@/lib/permisos";
+import { categoriasQueryOptions, productosQueryOptions, type Producto } from "@/lib/productos";
 
 type BusquedaProductos = { q?: string | undefined; categoria?: string | undefined };
 
-export const Route = createFileRoute("/_authenticated/productos")({
+export const Route = createFileRoute("/_authenticated/_personal/productos")({
   validateSearch: (search: Record<string, unknown>): BusquedaProductos => ({
     q: typeof search["q"] === "string" && search["q"] ? search["q"] : undefined,
     categoria:
@@ -45,18 +58,22 @@ export const Route = createFileRoute("/_authenticated/productos")({
       { title: "Productos — Farmacia San Judas SIG" },
       {
         name: "description",
-        content: "Inventario de productos con precio, stock y fecha de vencimiento.",
+        content: "Inventario de productos con precio, stock, vencimiento y alertas.",
       },
       { property: "og:title", content: "Productos — Farmacia San Judas SIG" },
       {
         property: "og:description",
-        content: "Inventario de productos con precio, stock y fecha de vencimiento.",
+        content: "Inventario de productos con precio, stock, vencimiento y alertas.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(productosQueryOptions),
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(productosQueryOptions),
+      context.queryClient.ensureQueryData(categoriasQueryOptions),
+    ]),
   pendingComponent: () => (
     <div className="grid min-h-screen place-items-center text-muted-foreground">
       Cargando productos…
@@ -87,10 +104,15 @@ function ErrorProductos({ error }: ErrorComponentProps) {
 function ProductosPage() {
   const { data: productos, dataUpdatedAt, refetch, isFetching } =
     useSuspenseQuery(productosQueryOptions);
-  const { user } = Route.useRouteContext();
+  const { data: categoriasTabla } = useSuspenseQuery(categoriasQueryOptions);
+  const { user, rol } = Route.useRouteContext();
   const { q = "", categoria } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const queryClient = useQueryClient();
+  const esGerente = puedeGestionarProductos(rol);
+
+  const [dialogo, setDialogo] = useState<{ abierto: boolean; producto?: Producto | undefined }>({
+    abierto: false,
+  });
 
   const categorias = useMemo(
     () => [...new Set(productos.map((p) => p.categoria))].sort(),
@@ -108,15 +130,9 @@ function ProductosPage() {
     );
   }, [productos, q, categoria]);
 
-  const stockBajo = productos.filter((p) => estadoStock(p.stock, p.stockMinimo) !== "normal").length;
-  const porVencer = productos.filter((p) => estadoVencimiento(p.fechaVencimiento) !== "vigente").length;
-
-  async function cerrarSesion() {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  }
+  const conStockBajo = productos.filter((p) => stockEnAlerta(p.stock, p.stockMinimo)).length;
+  const porVencer = productos.filter((p) => estadoVencimiento(p.fechaVencimiento) === "por-vencer").length;
+  const vencidos = productos.filter((p) => estadoVencimiento(p.fechaVencimiento) === "vencido").length;
 
   const hora = new Date(dataUpdatedAt).toLocaleTimeString("es-NI", {
     hour: "2-digit",
@@ -126,17 +142,7 @@ function ProductosPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b bg-surface">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <Marca subtitulo="Inventario" />
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:inline">{user.email}</span>
-            <Button variant="outline" size="sm" onClick={cerrarSesion}>
-              <LogOut /> Salir
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Encabezado subtitulo="Inventario" email={user.email} rol={rol} />
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -147,16 +153,41 @@ function ProductosPage() {
               Datos reales de tu base de datos · actualizado a las {hora}
             </p>
           </div>
-          <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={isFetching ? "animate-spin" : ""} /> Actualizar
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
+              <RefreshCw className={isFetching ? "animate-spin" : ""} /> Actualizar
+            </Button>
+            {esGerente && (
+              <Button onClick={() => setDialogo({ abierto: true })}>
+                <Plus /> Nuevo producto
+              </Button>
+            )}
+          </div>
         </div>
 
-        <section className="mt-8 grid gap-4 sm:grid-cols-3">
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Resumen icon={Package} etiqueta="Productos registrados" valor={productos.length} />
-          <Resumen icon={AlertTriangle} etiqueta="Con stock bajo o agotado" valor={stockBajo} tono="warning" />
-          <Resumen icon={CalendarX2} etiqueta="Vencidos o por vencer (90 días)" valor={porVencer} tono="danger" />
+          <Resumen
+            icon={AlertTriangle}
+            etiqueta="Stock igual o menor al mínimo"
+            valor={conStockBajo}
+            tono="rojo"
+          />
+          <Resumen
+            icon={CalendarClock}
+            etiqueta={`Vencen en menos de ${DIAS_AVISO_VENCIMIENTO} días`}
+            valor={porVencer}
+            tono="naranja"
+          />
+          <Resumen icon={CalendarX2} etiqueta="Vencidos" valor={vencidos} tono="vencido" />
         </section>
+
+        {!esGerente && (
+          <p className="mt-6 text-sm text-muted-foreground">
+            Con el rol de cajero puedes consultar los productos. Solo el gerente puede crearlos o
+            cambiar sus datos.
+          </p>
+        )}
 
         <section className="panel mt-8 overflow-hidden">
           <div className="flex flex-wrap items-center gap-3 border-b p-4">
@@ -201,7 +232,8 @@ function ProductosPage() {
                 <TableHead>Categoría</TableHead>
                 <TableHead className="text-right">Precio</TableHead>
                 <TableHead className="text-right">Stock</TableHead>
-                <TableHead className="pr-4">Vencimiento</TableHead>
+                <TableHead className={esGerente ? "" : "pr-4"}>Vencimiento</TableHead>
+                {esGerente && <TableHead className="pr-4 text-right">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -210,7 +242,7 @@ function ProductosPage() {
                 const venc = estadoVencimiento(p.fechaVencimiento);
                 const dias = diasParaVencer(p.fechaVencimiento);
                 return (
-                  <TableRow key={p.id}>
+                  <TableRow key={p.id} data-testid={`producto-${p.codigo}`}>
                     <TableCell className="pl-4 font-mono text-xs">{p.codigo}</TableCell>
                     <TableCell className="font-medium">{p.nombre}</TableCell>
                     <TableCell className="text-muted-foreground">{p.categoria}</TableCell>
@@ -218,25 +250,49 @@ function ProductosPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {stock !== "normal" && (
-                          <Badge variant="warning">{stock === "agotado" ? "Agotado" : "Bajo"}</Badge>
+                          <Badge variant="stock">{stock === "agotado" ? "Agotado" : "Stock bajo"}</Badge>
                         )}
-                        <span className="tabular-nums">{p.stock}</span>
+                        <span
+                          className={`tabular-nums ${stock !== "normal" ? "font-semibold text-destructive" : ""}`}
+                        >
+                          {p.stock}
+                        </span>
                       </div>
                       <p className="text-[11px] text-muted-foreground">mín. {p.stockMinimo}</p>
                     </TableCell>
-                    <TableCell className="pr-4">
-                      <div className="flex items-center gap-2">
+                    <TableCell className={esGerente ? "" : "pr-4"}>
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="tabular-nums">{formatearFecha(p.fechaVencimiento)}</span>
-                        {venc === "vencido" && <Badge variant="danger">Vencido</Badge>}
-                        {venc === "por-vencer" && <Badge variant="danger">{dias} días</Badge>}
+                        {venc === "vencido" && (
+                          <Badge variant="vencido">
+                            Vencido hace {-dias} {-dias === 1 ? "día" : "días"}
+                          </Badge>
+                        )}
+                        {venc === "por-vencer" && (
+                          <Badge variant="por-vencer">
+                            {dias === 0 ? "Vence hoy" : `Vence en ${dias} ${dias === 1 ? "día" : "días"}`}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
+                    {esGerente && (
+                      <TableCell className="pr-4 text-right">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          aria-label={`Editar ${p.nombre}`}
+                          onClick={() => setDialogo({ abierto: true, producto: p })}
+                        >
+                          <Pencil /> Editar
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
               {filtrados.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={esGerente ? 7 : 6} className="py-10 text-center text-muted-foreground">
                     Ningún producto coincide con la búsqueda.
                   </TableCell>
                 </TableRow>
@@ -245,6 +301,15 @@ function ProductosPage() {
           </Table>
         </section>
       </main>
+
+      {esGerente && (
+        <ProductoDialog
+          abierto={dialogo.abierto}
+          onAbiertoChange={(abierto) => setDialogo((d) => ({ ...d, abierto }))}
+          producto={dialogo.producto}
+          categorias={categoriasTabla}
+        />
+      )}
     </div>
   );
 }
@@ -258,13 +323,21 @@ function Resumen({
   icon: typeof Package;
   etiqueta: string;
   valor: number;
-  tono?: "warning" | "danger";
+  tono?: "rojo" | "naranja" | "vencido";
 }) {
   const color =
-    tono === "warning" ? "text-warning-foreground" : tono === "danger" ? "text-destructive" : "text-primary";
+    tono === "rojo"
+      ? "bg-destructive text-destructive-foreground"
+      : tono === "naranja"
+        ? "bg-naranja text-naranja-foreground"
+        : tono === "vencido"
+          ? "bg-foreground text-background"
+          : "bg-secondary text-primary";
   return (
     <div className="panel p-5">
-      <Icon className={`size-5 ${color}`} />
+      <span className={`grid size-9 place-items-center rounded-lg ${color}`}>
+        <Icon className="size-5" />
+      </span>
       <p className="mt-3 font-display text-3xl font-bold tabular-nums">{valor}</p>
       <p className="text-sm text-muted-foreground">{etiqueta}</p>
     </div>
