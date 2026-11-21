@@ -49,6 +49,11 @@ export function Encabezado({
                   {e.etiqueta}
                 </Link>
               ))}
+              {rol === "gerente" && (
+                <Link to="/dashboard" className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" activeProps={{ className: "bg-secondary text-secondary-foreground" }}>
+                  Dashboard
+                </Link>
+              )}
             </nav>
           )}
         </div>

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPersonalRouteImport } from './routes/_authenticated/_personal'
+import { Route as AuthenticatedPersonalDashboardRouteImport } from './routes/_authenticated/_personal/dashboard'
 import { Route as AuthenticatedPersonalProductosRouteImport } from './routes/_authenticated/_personal/productos'
 import { Route as AuthenticatedPersonalVentasRouteImport } from './routes/_authenticated/_personal/ventas'
 
@@ -34,6 +35,12 @@ const AuthenticatedPersonalRoute = AuthenticatedPersonalRouteImport.update({
   id: '/_personal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPersonalDashboardRoute =
+  AuthenticatedPersonalDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedPersonalRoute,
+  } as any)
 const AuthenticatedPersonalProductosRoute =
   AuthenticatedPersonalProductosRouteImport.update({
     id: '/productos',
@@ -50,12 +57,14 @@ const AuthenticatedPersonalVentasRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedPersonalDashboardRoute
   '/productos': typeof AuthenticatedPersonalProductosRoute
   '/ventas': typeof AuthenticatedPersonalVentasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedPersonalDashboardRoute
   '/productos': typeof AuthenticatedPersonalProductosRoute
   '/ventas': typeof AuthenticatedPersonalVentasRoute
 }
@@ -65,20 +74,22 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/_personal': typeof AuthenticatedPersonalRouteWithChildren
+  '/_authenticated/_personal/dashboard': typeof AuthenticatedPersonalDashboardRoute
   '/_authenticated/_personal/productos': typeof AuthenticatedPersonalProductosRoute
   '/_authenticated/_personal/ventas': typeof AuthenticatedPersonalVentasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/productos' | '/ventas'
+  fullPaths: '/' | '/auth' | '/dashboard' | '/productos' | '/ventas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/productos' | '/ventas'
+  to: '/' | '/auth' | '/dashboard' | '/productos' | '/ventas'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/_personal'
+    | '/_authenticated/_personal/dashboard'
     | '/_authenticated/_personal/productos'
     | '/_authenticated/_personal/ventas'
   fileRoutesById: FileRoutesById
@@ -119,6 +130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPersonalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/_personal/dashboard': {
+      id: '/_authenticated/_personal/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedPersonalDashboardRouteImport
+      parentRoute: typeof AuthenticatedPersonalRoute
+    }
     '/_authenticated/_personal/productos': {
       id: '/_authenticated/_personal/productos'
       path: '/productos'
@@ -137,11 +155,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedPersonalRouteChildren {
+  AuthenticatedPersonalDashboardRoute: typeof AuthenticatedPersonalDashboardRoute
   AuthenticatedPersonalProductosRoute: typeof AuthenticatedPersonalProductosRoute
   AuthenticatedPersonalVentasRoute: typeof AuthenticatedPersonalVentasRoute
 }
 
 const AuthenticatedPersonalRouteChildren: AuthenticatedPersonalRouteChildren = {
+  AuthenticatedPersonalDashboardRoute: AuthenticatedPersonalDashboardRoute,
   AuthenticatedPersonalProductosRoute: AuthenticatedPersonalProductosRoute,
   AuthenticatedPersonalVentasRoute: AuthenticatedPersonalVentasRoute,
 }

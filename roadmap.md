@@ -10,6 +10,7 @@
 - [x] Comprobar ventas en la base de datos (simulación cajero/gerente/sin rol)
 - [ ] Probar ventas y productos en pantalla con sesión — bloqueado: no puedo iniciar sesión en este proyecto; lo prueba Kelly
 - [x] Ventas: bloquear productos vencidos (pantalla y base de datos)
-- [ ] Cargar 30 ventas históricas idempotentes (10 septiembre, 10 octubre, 10 noviembre hasta el 20) y comprobar inventario
-- [ ] Dashboard exclusivo del gerente: KPI, gráfico mensual y rotación de 90 días
-- [ ] Comprobar datos y permisos gerenciales sin repetir simulaciones de ventas
+- [ ] Cargar 30 ventas históricas idempotentes — pendiente de autorización del SQL definitivo; datos y existencias revisados sin escrituras
+- [ ] Activar consultas del dashboard preparado (KPI, gráfico, rotación) — pendiente de autorización de Supabase
+- [ ] Comprobar gráfico con datos reales y permisos gerente/cajero — requiere consultas instaladas y sesión; acceso anónimo comprobado
+- [x] Corregir SQL para resolver códigos e IDs reales, precios de productos y vencimiento < 30 días; presentar para autorización sin ejecutarlo
