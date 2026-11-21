@@ -202,6 +202,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      dashboard_gerencial: { Args: never; Returns: Json }
       registrar_venta: {
         Args: { p_cliente_id: number; p_lineas: Json }
         Returns: Json
