@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPersonalRouteImport } from './routes/_authenticated/_personal'
 import { Route as AuthenticatedPersonalProductosRouteImport } from './routes/_authenticated/_personal/productos'
+import { Route as AuthenticatedPersonalVentasRouteImport } from './routes/_authenticated/_personal/ventas'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,16 +40,24 @@ const AuthenticatedPersonalProductosRoute =
     path: '/productos',
     getParentRoute: () => AuthenticatedPersonalRoute,
   } as any)
+const AuthenticatedPersonalVentasRoute =
+  AuthenticatedPersonalVentasRouteImport.update({
+    id: '/ventas',
+    path: '/ventas',
+    getParentRoute: () => AuthenticatedPersonalRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/productos': typeof AuthenticatedPersonalProductosRoute
+  '/ventas': typeof AuthenticatedPersonalVentasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/productos': typeof AuthenticatedPersonalProductosRoute
+  '/ventas': typeof AuthenticatedPersonalVentasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -57,12 +66,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/_personal': typeof AuthenticatedPersonalRouteWithChildren
   '/_authenticated/_personal/productos': typeof AuthenticatedPersonalProductosRoute
+  '/_authenticated/_personal/ventas': typeof AuthenticatedPersonalVentasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/productos'
+  fullPaths: '/' | '/auth' | '/productos' | '/ventas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/productos'
+  to: '/' | '/auth' | '/productos' | '/ventas'
   id:
     | '__root__'
     | '/'
@@ -70,6 +80,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/_personal'
     | '/_authenticated/_personal/productos'
+    | '/_authenticated/_personal/ventas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -115,15 +126,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPersonalProductosRouteImport
       parentRoute: typeof AuthenticatedPersonalRoute
     }
+    '/_authenticated/_personal/ventas': {
+      id: '/_authenticated/_personal/ventas'
+      path: '/ventas'
+      fullPath: '/ventas'
+      preLoaderRoute: typeof AuthenticatedPersonalVentasRouteImport
+      parentRoute: typeof AuthenticatedPersonalRoute
+    }
   }
 }
 
 interface AuthenticatedPersonalRouteChildren {
   AuthenticatedPersonalProductosRoute: typeof AuthenticatedPersonalProductosRoute
+  AuthenticatedPersonalVentasRoute: typeof AuthenticatedPersonalVentasRoute
 }
 
 const AuthenticatedPersonalRouteChildren: AuthenticatedPersonalRouteChildren = {
   AuthenticatedPersonalProductosRoute: AuthenticatedPersonalProductosRoute,
+  AuthenticatedPersonalVentasRoute: AuthenticatedPersonalVentasRoute,
 }
 
 const AuthenticatedPersonalRouteWithChildren =

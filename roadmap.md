@@ -3,9 +3,10 @@
 - [x] Productos: alertas (rojo stock ≤ mínimo, naranja < 30 días, vencido aparte)
 - [x] Productos: listar, buscar, crear y editar (solo gerente)
 - [x] Seguridad: solo cajero/gerente en usuario_roles; nadie se asigna rol
-- [ ] Comprobar los 15 productos con sesión (cajero y gerente)
-- [ ] Ventas: cliente, búsqueda de productos, varias líneas, cantidades, subtotal, total, quitar líneas, confirmar
-- [ ] Ventas: registro transaccional en la base de datos (ventas + detalle_ventas + descuento de stock, "Stock insuficiente")
-- [ ] Ventas: el navegador no modifica el inventario directamente; cajero y gerente pueden vender
-- [ ] Comprobar ventas de punta a punta
+- [x] Comprobar los 15 productos por rol en la base de datos
+- [x] Ventas: cliente, búsqueda de productos, varias líneas, cantidades, subtotal, total, quitar líneas, confirmar
+- [x] Ventas: registro transaccional en la base de datos (ventas + detalle_ventas + descuento de stock, "Stock insuficiente")
+- [x] Ventas: el navegador no modifica el inventario directamente; cajero y gerente pueden vender
+- [x] Comprobar ventas en la base de datos (simulación cajero/gerente/sin rol)
+- [ ] Probar ventas y productos en pantalla con sesión — bloqueado: no puedo iniciar sesión en este proyecto; lo prueba Kelly
 - [ ] Dashboard (después de ventas)

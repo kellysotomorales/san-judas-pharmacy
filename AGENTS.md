@@ -33,3 +33,5 @@ use the editor.
 
 - Inventory rules (low stock, expiry warnings, price formatting) live as pure functions in `src/lib/inventario.ts` with tests beside them — keeps business rules testable without the database.
 - Staff-only screens live under `src/routes/_authenticated/` and read data with the browser client so row-level security applies to the signed-in user.
+- Stock changes only inside the `registrar_venta` database function (one transaction: ventas + detalle_ventas + stock); the browser has no UPDATE on `productos.stock` — keeps inventory consistent and tamper-proof.
+- Role checks for RLS live in the non-exposed `private` schema (`private.es_personal`, `private.es_gerente`); screens for staff sit under the `_authenticated/_personal` layout, which blocks accounts without a cajero/gerente row in `usuario_roles`.

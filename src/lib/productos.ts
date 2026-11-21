@@ -78,10 +78,12 @@ export async function guardarProducto(datos: ProductoForm, id?: number): Promise
     fecha_vencimiento: datos.fechaVencimiento,
   };
 
+  // El stock solo se fija al crear; después cambia únicamente con las ventas.
+  const { stock: _stock, ...sinStock } = fila;
   const { error } =
     id === undefined
       ? await supabase.from("productos").insert(fila).select("id").single()
-      : await supabase.from("productos").update(fila).eq("id", id).select("id").single();
+      : await supabase.from("productos").update(sinStock).eq("id", id).select("id").single();
 
   if (error) throw new Error(mensajeError(error, datos.codigo));
 }

@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
 const puntos = [
   { icon: PackageSearch, titulo: "Inventario", texto: "Código, precio y stock de cada producto." },
   { icon: CalendarClock, titulo: "Vencimientos", texto: "Avisos de productos vencidos o por vencer." },
-  { icon: Receipt, titulo: "Ventas", texto: "Registro de ventas por cliente. Próximamente." },
+  { icon: Receipt, titulo: "Ventas", texto: "Ventas por cliente con descuento automático de stock." },
 ];
 
 function Index() {

@@ -146,7 +146,16 @@ export function ProductoDialog({
           <div className="sm:col-span-2">{campo("nombre", "Nombre", { maxLength: 150 })}</div>
           {campo("precio", "Precio (C$)", { type: "number", inputMode: "decimal", min: 0.01, step: 0.01 })}
           {campo("fechaVencimiento", "Fecha de vencimiento", { type: "date" })}
-          {campo("stock", "Stock", { type: "number", inputMode: "numeric", min: 0, step: 1 })}
+          <div>
+            {campo(
+              "stock",
+              producto ? "Stock" : "Stock inicial",
+              { type: "number", inputMode: "numeric", min: 0, step: 1, disabled: !!producto },
+            )}
+            {producto && (
+              <p className="mt-1 text-xs text-muted-foreground">El stock cambia solo con las ventas.</p>
+            )}
+          </div>
           {campo("stockMinimo", "Stock mínimo", { type: "number", inputMode: "numeric", min: 0, step: 1 })}
           <DialogFooter className="sm:col-span-2">
             <Button type="button" variant="outline" onClick={() => onAbiertoChange(false)}>
