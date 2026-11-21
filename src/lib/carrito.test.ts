@@ -4,6 +4,7 @@ import {
   cambiarCantidad,
   excedeStock,
   lineasParaRegistrar,
+  motivoNoVendible,
   quitarLinea,
   subtotalLinea,
   totalVenta,
@@ -51,5 +52,18 @@ describe("carrito de venta", () => {
   it("no envía precios a la base de datos, solo producto y cantidad", () => {
     const lineas = cambiarCantidad(agregarProducto([], acetaminofen), 1, 3);
     expect(lineasParaRegistrar(lineas)).toEqual([{ producto_id: 1, cantidad: 3 }]);
+  });
+});
+
+describe("productos que no se pueden vender", () => {
+  const hoy = new Date(2026, 10, 20); // 20 nov 2026
+  it("un producto cuya fecha de vencimiento ya pasó no se puede agregar", () => {
+    expect(motivoNoVendible({ stock: 50, fechaVencimiento: "2026-11-19" }, hoy)).toBe("vencido");
+  });
+  it("un producto que vence hoy todavía se puede vender", () => {
+    expect(motivoNoVendible({ stock: 50, fechaVencimiento: "2026-11-20" }, hoy)).toBeNull();
+  });
+  it("un producto sin existencias no se puede agregar", () => {
+    expect(motivoNoVendible({ stock: 0, fechaVencimiento: "2027-01-01" }, hoy)).toBe("agotado");
   });
 });

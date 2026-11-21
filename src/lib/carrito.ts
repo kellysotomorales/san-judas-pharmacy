@@ -1,3 +1,5 @@
+import { estadoVencimiento } from "@/lib/inventario";
+
 /** Reglas del carrito de una venta. Los precios vienen de la tabla `productos`; la base de datos recalcula todo al registrar. */
 
 export type LineaVenta = {
@@ -16,6 +18,18 @@ type ProductoVendible = {
   precio: number;
   stock: number;
 };
+
+export type MotivoNoVendible = "vencido" | "agotado";
+
+/** Un producto vencido o sin existencias no se puede agregar a una venta. */
+export function motivoNoVendible(
+  producto: { stock: number; fechaVencimiento: string },
+  hoy: Date = new Date(),
+): MotivoNoVendible | null {
+  if (estadoVencimiento(producto.fechaVencimiento, hoy) === "vencido") return "vencido";
+  if (producto.stock <= 0) return "agotado";
+  return null;
+}
 
 /** Agrega un producto; si ya está en la venta, suma una unidad a su línea. */
 export function agregarProducto(lineas: LineaVenta[], producto: ProductoVendible): LineaVenta[] {

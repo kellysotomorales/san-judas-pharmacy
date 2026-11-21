@@ -9,5 +9,5 @@
 - [x] Ventas: el navegador no modifica el inventario directamente; cajero y gerente pueden vender
 - [x] Comprobar ventas en la base de datos (simulación cajero/gerente/sin rol)
 - [ ] Probar ventas y productos en pantalla con sesión — bloqueado: no puedo iniciar sesión en este proyecto; lo prueba Kelly
-- [ ] Ventas: bloquear productos vencidos (pantalla y base de datos)
+- [x] Ventas: bloquear productos vencidos (pantalla y base de datos)
 - [ ] Dashboard (después de ventas)

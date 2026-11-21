@@ -37,17 +37,18 @@ import {
   agregarProducto,
   cambiarCantidad,
   excedeStock,
+  motivoNoVendible,
   quitarLinea,
   subtotalLinea,
   totalVenta,
   type LineaVenta,
 } from "@/lib/carrito";
-import { estadoVencimiento, formatearPrecio } from "@/lib/inventario";
+import { formatearPrecio } from "@/lib/inventario";
 import { productosQueryOptions } from "@/lib/productos";
 import {
   clientesQueryOptions,
   registrarVenta,
-  StockInsuficienteError,
+  VentaRechazadaError,
   type VentaRegistrada,
 } from "@/lib/ventas";
 
@@ -103,7 +104,7 @@ function VentasPage() {
   const [clienteId, setClienteId] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [lineas, setLineas] = useState<LineaVenta[]>([]);
-  const [rechazo, setRechazo] = useState<string | null>(null);
+  const [rechazo, setRechazo] = useState<{ titulo: string; detalle: string | null } | null>(null);
   const [confirmada, setConfirmada] = useState<VentaRegistrada | null>(null);
 
   const resultados = useMemo(() => {
@@ -125,9 +126,9 @@ function VentasPage() {
       await queryClient.invalidateQueries({ queryKey: ["productos"] });
     },
     onError: (err) => {
-      if (err instanceof StockInsuficienteError) {
-        setRechazo(err.detalle ?? null);
-        toast.error("Stock insuficiente");
+      if (err instanceof VentaRechazadaError) {
+        setRechazo({ titulo: err.message, detalle: err.detalle ?? null });
+        toast.error(err.message);
         // Actualiza existencias por si cambiaron mientras se armaba la venta.
         queryClient.invalidateQueries({ queryKey: ["productos"] });
       } else {
@@ -157,7 +158,7 @@ function VentasPage() {
       <main className="mx-auto max-w-6xl px-6 py-10">
         <h1 className="text-4xl font-bold">Nueva venta</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Los precios y existencias vienen del inventario. El stock se descuenta al registrar la venta.
+          Los precios y existencias vienen del inventario. Los productos vencidos no se pueden vender. El stock se descuenta al registrar la venta.
         </p>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
@@ -193,7 +194,7 @@ function VentasPage() {
               </div>
               <ul className="mt-3 divide-y" aria-label="Resultados de búsqueda">
                 {resultados.map((p) => {
-                  const vencido = estadoVencimiento(p.fechaVencimiento) === "vencido";
+                  const motivo = motivoNoVendible(p);
                   return (
                     <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
                       <div className="min-w-0">
@@ -202,17 +203,17 @@ function VentasPage() {
                           <span className="font-mono">{p.codigo}</span>
                           <span>{formatearPrecio(p.precio)}</span>
                           <span>Stock {p.stock}</span>
-                          {vencido && <Badge variant="vencido">Vencido</Badge>}
+                          {motivo === "vencido" && <Badge variant="vencido">Vencido · no se vende</Badge>}
                         </p>
                       </div>
                       <Button
                         size="sm"
                         variant="outline"
-                        disabled={p.stock <= 0}
+                        disabled={motivo !== null}
                         aria-label={`Agregar ${p.nombre}`}
                         onClick={() => cambiarLineas(agregarProducto(lineas, p))}
                       >
-                        {p.stock <= 0 ? "Agotado" : <><Plus /> Agregar</>}
+                        {motivo === "vencido" ? "Vencido" : motivo === "agotado" ? "Agotado" : <><Plus /> Agregar</>}
                       </Button>
                     </li>
                   );
@@ -243,8 +244,8 @@ function VentasPage() {
               >
                 <XCircle className="mt-0.5 size-5 shrink-0" />
                 <div>
-                  <p className="font-semibold">Stock insuficiente</p>
-                  <p>La venta no se registró. {rechazo}</p>
+                  <p className="font-semibold">{rechazo.titulo}</p>
+                  <p>La venta no se registró. {rechazo.detalle}</p>
                 </div>
               </div>
             )}

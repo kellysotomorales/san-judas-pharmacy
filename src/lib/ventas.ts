@@ -24,17 +24,20 @@ export type VentaRegistrada = {
   lineas: { codigo: string; nombre: string; cantidad: number; precioUnitario: number; subtotal: number }[];
 };
 
-/** Error de la base de datos cuando alguna cantidad supera las existencias. */
-export class StockInsuficienteError extends Error {
-  constructor(public detalle: string | undefined) {
-    super("Stock insuficiente");
-    this.name = "StockInsuficienteError";
+/** La base de datos rechazó la venta completa (sin guardar nada) por una regla de inventario. */
+export class VentaRechazadaError extends Error {
+  constructor(
+    message: "Stock insuficiente" | "Producto vencido",
+    public detalle: string | undefined,
+  ) {
+    super(message);
+    this.name = "VentaRechazadaError";
   }
 }
 
 /**
  * Registra la venta con la función `registrar_venta` de la base de datos: una sola transacción
- * que toma los precios de `productos`, crea la venta y su detalle y descuenta el stock.
+ * que toma los precios de `productos`, rechaza productos vencidos o sin stock, crea la venta y su detalle y descuenta el stock.
  */
 export async function registrarVenta(clienteId: number, lineas: LineaVenta[]): Promise<VentaRegistrada> {
   const { data, error } = await supabase.rpc("registrar_venta", {
@@ -43,7 +46,8 @@ export async function registrarVenta(clienteId: number, lineas: LineaVenta[]): P
   });
 
   if (error) {
-    if (error.message === "Stock insuficiente") throw new StockInsuficienteError(error.details || undefined);
+    if (error.message === "Stock insuficiente" || error.message === "Producto vencido")
+      throw new VentaRechazadaError(error.message, error.details || undefined);
     if (error.code === "42501") throw new Error("Tu cuenta no tiene permiso para registrar ventas.");
     throw new Error(`No se pudo registrar la venta: ${error.message}`);
   }
