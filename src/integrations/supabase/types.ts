@@ -202,7 +202,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      registrar_venta: {
+        Args: { p_cliente_id: number; p_lineas: Json }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
